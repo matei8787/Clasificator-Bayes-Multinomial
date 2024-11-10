@@ -1,3 +1,4 @@
 *.txt
 *.csv
 venv/
+date/
