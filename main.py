@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
@@ -16,15 +15,10 @@ class DataNode:
     
     def __str__(self):
         return '{} : {}'.format(self.label, self.data)
-    
-class BayesDataNode:
-    def __init__(self, data_node, data_count=0):
-        self.data_node = data_node
-        self.data_count = data_count
-    def __str__(self):
-        return '{} : {}'.format(self.data_node, self.data_count)
-    
+
 class BayesClassifier:
+    #datele sunt tinute in date[label] = {data1: count1, data2: count2} ...
+    #probabilitatile sunt tinute in probabilitati[label] = {cuvant1: probabilitate1, cuvant2: probabilitate2} ...
     def __init__(self):
         self.date = []
         self.X_train = []
@@ -48,24 +42,24 @@ class BayesClassifier:
             for data_node in self.date:
                 print(data_node)
                 print('\n')
-    
+                
+    #impartim datele in date de antrenament si date de test
     def split_date(self):
         x = [i.data for i in self.date]
         y = [i.label for i in self.date]
-        self.X_train, X_test, self.y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=420)
+        self.X_train, X_test, self.y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=69)
         return X_test, y_test
         
         
     TOTAL_LABEL = '$total#label$'
+    #Preparam frumos datele
     def init_date(self):
-        #init X_train si y_train cu datele impartite pe cuvinte si label
         for i in range(len(self.X_train)):
             for char in CARACTERE_SPECIALE:
-                self.X_train[i] = self.X_train[i].replace(char, ' ')
+                self.X_train[i] = str(self.X_train[i]).replace(char, ' ')
         self.X_train = [data.split() for data in self.X_train]
         self.X_train = [DataNode(data, label) for data, label in zip(self.X_train, self.y_train)]
         self.date = {}
-        #date va fi tinut minte gen data[label] = {data1: count1, data2: count2} ...
         for data_node in self.X_train:
             if data_node.label not in self.date:
                 self.date[data_node.label] = {}
@@ -118,6 +112,7 @@ class BayesClassifier:
         for char in CARACTERE_SPECIALE:
             data = data.replace(char, ' ')
         data = data.split()
+        
         probabilitate_maxima = -1
         label_maxima = None
         for label in self.date:
@@ -134,6 +129,7 @@ class BayesClassifier:
             if probabilitate > probabilitate_maxima:
                 probabilitate_maxima = probabilitate
                 label_maxima = label
+            
         return label_maxima
     
 
@@ -153,25 +149,49 @@ def make_date_mici():
         writer.writerow(['ham','free free free free free'])
         
 
-def load_data(file):
-    data = pd.read_csv(file, encoding='latin-1')
+def load_data(file, encoding='latin-1', label_row='v1', data_row='v2', delimiter=','):
+    data = pd.read_csv(file, encoding=encoding, delimiter=delimiter)
     for _, row in data.iterrows():
-        aux = DataNode(row['v2'], row['v1'])
+        aux = DataNode(row[data_row], row[label_row])
         bc.add_data(aux)    
 
 def main():
     #make_date_mici()
-    load_data('./date/spam.csv')
+    file = input("Introduceti numele fisierului: ")
+    if file.lower() == 'spam_mic':
+        file='./date/spam_mic.csv'
+        encoding = 'latin-1'
+        label_row = 'v1'
+        data_row = 'v2'
+    elif file.lower() == 'spam':
+        file='./date/spam.csv'
+        encoding = 'latin-1'
+        label_row = 'v1'
+        data_row = 'v2'
+    elif file.lower() == 'politic':
+        file='./date/dataset_politic.csv'
+        encoding = 'latin-1'
+        label_row = 'Emotion'
+        data_row = 'Text_of_Speech'
+    elif file.lower() == 'emotie':
+        file='./date/emotion_dataset_raw.csv'
+        encoding = 'latin-1'
+        label_row = 'Emotion'
+        data_row = 'Text'
+    else:
+        print('Usage: spam_mic, spam, politic, emotie')
+    load_data(file, encoding=encoding, label_row=label_row, data_row=data_row)
     X_test, y_test = bc.split_date()
     bc.init_date()
     bc.train()
     bune = 0
     total = 0
     for data, label in zip(X_test, y_test):
-        if bc.predict(data) == label:
+        predictie = bc.predict(data)
+        if predictie == label:
             bune += 1
         total += 1
-        print(bc.predict(data), label)
+        print(predictie, ' ', label)
     print('bune: ', bune)
     print('total: ', total)
     print('Probabilitate sa fie bun (acuratete): ', bune / total)
