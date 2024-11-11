@@ -34,7 +34,7 @@ I. Din clasificatorul Bayes
 - train(self)
     - Calculeaza $P(w_i|label)$ pentru fiecare $w_i$ din fiecare label
 - test(self, data)
-    - Calculeaza $P(D|label)$
+    - Calculeaza $P(w_i|label)$ pentru fiecare label si pentru fiecare cuvant din data, inmulteste $P(w_i|label)$ la fiecare label si alege probabilitatea maxima.
 
 ## FOLOSINTA
 
